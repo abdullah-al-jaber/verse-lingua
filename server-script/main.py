@@ -121,7 +121,7 @@ async def submit_result(websocket: websockets.ServerConnection, data: dict) -> N
     global current_index
     assert "current_index" in data, "Current Index isn't found !"
     assert "text" in data, "Text isn't found !"
-    write_file(os.path.join(argument.output_folder_path, data["current_index"]), data["text"], "w")
+    write_file(os.path.join(argument.output_folder_path, file_names[data["current_index"]]), data["text"], "w")
     console.print(f"TRANSLATED: {current_index}.txt ! ")
     current_index += 1
     if current_index == len(file_names):
@@ -145,7 +145,7 @@ async def verse_captor(websocket: websockets.ServerConnection):
 
 async def main() -> None:
     global current_index, file_names
-    os.makedirs(argument.folder_path, exist_ok=True)
+    os.makedirs(argument.output_folder_path, exist_ok=True)
     current_index, file_names = 0, os.listdir(argument.input_folder_path)
     server = await websockets.serve(verse_captor, "127.0.0.1", 9696)
     console.print("SERVER IS RUNNING ! [127.0.0.1:9696]")
