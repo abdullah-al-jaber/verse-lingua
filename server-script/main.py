@@ -2,7 +2,7 @@
 # PYTHON_ARGCOMPLETE_OK
 
 ########################
-#     Verse Captor     #
+#     Verse Lingua     #
 ########################
 
 import os
@@ -18,9 +18,7 @@ import rich.console
 import rich.traceback
 import rich_argparse
 import argcomplete
-import soupsieve
 import websockets
-import bs4
 
 console = rich.console.Console()
 rich.traceback.install(console=console, show_locals=True)
@@ -29,8 +27,8 @@ sys.stderr = open(os.devnull, "w")
 halt_event = asyncio.Event()
 
 blank_line = "\n"
-current_url = "https://example.com/"
-current_count = 0
+current_index = 0
+file_names = []
 
 
 @typing.overload
@@ -58,86 +56,46 @@ class custom_argument_parser(argparse.ArgumentParser):
 
 
 class custom_argument_namespace(argparse.Namespace):
-    start_url: str
-    stop_url: str
-    folder_path: str
-    text_selector: str
-    url_selector: str
+    input_folder_path: str
+    output_folder_path: str
 
 
-def url_validator(url: str) -> str:
-    parse_result = urllib.parse.urlparse(url)
-    if not (parse_result.scheme in ("http", "https") and parse_result.netloc):
-        raise argparse.ArgumentTypeError(f"URL isn't valid! [URL: '{url}']")
-    return url
+def input_folder_path_validator(input_folder_path: str) -> str:
+    if not os.path.isdir(input_folder_path):
+        raise argparse.ArgumentTypeError(f"Input Folder doesn't exists ! [INPUT FOLDER PATH: '{input_folder_path}']")
+    if len(os.listdir(input_folder_path)) == 0:
+        raise argparse.ArgumentTypeError(f"Input Folder is empty ! [INPUT FOLDER PATH: '{input_folder_path}']")
+    return input_folder_path
 
 
-def folder_path_validator(folder_path: str) -> str:
+def output_folder_path_validator(folder_path: str) -> str:
     if os.path.isdir(folder_path) and len(os.listdir(folder_path)) != 0:
-        raise argparse.ArgumentTypeError(f"Folder isn't empty ! [FOLDER PATH: '{folder_path}']")
+        raise argparse.ArgumentTypeError(f"Output Folder isn't empty ! [OUTPUT FOLDER PATH: '{folder_path}']")
     return folder_path
-
-
-def selector_validator(selector: str) -> str:
-    try:
-        soupsieve.compile(selector)
-        return selector
-    except Exception as error:
-        raise argparse.ArgumentTypeError(f"Selector isn't valid ! [SELECTOR: '{selector}']  \n ({error})")
 
 
 argument_parser = custom_argument_parser(
     prog="verse-lingua",
     formatter_class=rich_argparse.RichHelpFormatter,
-    description="Scrap novel from website dynamically",
+    description="Translate novel with Google Translate",
     epilog="No way Home !",
     add_help=False,
 )
 
 argument_parser.add_argument(
-    "--start-url",
-    type=url_validator,
-    metavar="URL",
-    help="Start URL for scaping novel chapter",
-    required=True,
-)
-
-argument_parser.add_argument(
-    "--stop-url",
-    type=url_validator,
-    metavar="URL",
-    help="Stop URL for scaping novel chapter",
-    required=True,
-)
-
-argument_parser.add_argument(
-    "--folder-path",
-    type=folder_path_validator,
+    "--input-folder-path",
+    type=input_folder_path_validator,
     metavar="FOLDER_PATH",
-    help="Folder Path for novel chapter texts",
+    help="Folder Path for native novel chapter texts",
     required=True,
 )
 
 argument_parser.add_argument(
-    "--text-selector",
-    type=selector_validator,
-    metavar="SELECTOR",
-    help="Selector for extracting text from html",
+    "--output-folder-path",
+    type=output_folder_path_validator,
+    metavar="FOLDER_PATH",
+    help="Folder Path for foreign novel chapter texts",
     required=True,
-)
-
-argument_parser.add_argument(
-    "--url-selector",
-    type=selector_validator,
-    metavar="SELECTOR",
-    help="Selector for extracting url from html",
-    required=True,
-)
-
-argument_parser.add_argument(
-    "--help",
-    action="help",
-    help="Show this help message and exit",
 )
 
 argcomplete.autocomplete(argument_parser)
@@ -154,40 +112,27 @@ def write_file(file_path: str, content: str | bytes, mode: str) -> None:
         file.write(content)
 
 
-async def request_current_url(websocket: websockets.ServerConnection, data: dict) -> None:
-    data = {
-        "current_url": current_url,
-    }
-    await websocket.send(json.dumps({"type": "response_current_url", "data": data}))
+async def request_current_job(websocket: websockets.ServerConnection, data: dict) -> None:
+    data = {"current_index": current_index, "text": read_file(os.path.join(argument.input_folder_path, file_names[current_index]), "r")}
+    await websocket.send(json.dumps({"type": "response_current_job", "data": data}))
 
 
-async def submit_html(websocket: websockets.ServerConnection, data: dict) -> None:
-    global current_url, current_count
-    text_selector = soupsieve.compile(argument.text_selector)
-    url_selector = soupsieve.compile(argument.url_selector)
-    soup = bs4.BeautifulSoup(data["html"], "html.parser")
-    text_elements = text_selector.select(soup)
-    url_elements = url_selector.select(soup)
-    assert len(text_elements) > 0, "No text element found !"
-    assert len(url_elements) > 0, "No url element found !"
-    text = blank_line.join([element.get_text(separator=blank_line, strip=True) for element in text_elements])
-    text = blank_line.join([line.strip() for line in text.split(blank_line) if line.strip() != ""])
-    url = url_elements[0].get("href")
-    url = str(url).strip()
-    assert len(text) > 0, "No text found in the text elements !"
-    assert len(url) > 0, "No url found in the url element !"
-    write_file(os.path.join(argument.folder_path, f"chapter-{current_count}.txt"), text, "w")
-    console.print(f"SAVED: chapter-{current_count}.txt ! [{current_url}]")
-    if current_url == argument.stop_url:
+async def submit_result(websocket: websockets.ServerConnection, data: dict) -> None:
+    global current_index
+    assert "current_index" in data, "Current Index isn't found !"
+    assert "text" in data, "Text isn't found !"
+    write_file(os.path.join(argument.output_folder_path, data["current_index"]), data["text"], "w")
+    console.print(f"TRANSLATED: {current_index}.txt ! ")
+    current_index += 1
+    if current_index == len(file_names):
         await websocket.close()
         halt_event.set()
-    current_url, current_count = urllib.parse.urljoin(current_url, str(url)), current_count + 1
 
 
 async def verse_captor(websocket: websockets.ServerConnection):
     handler_mapping = {
-        "request_current_url": request_current_url,
-        "submit_html": submit_html,
+        "request_current_job": request_current_job,
+        "submit_result": submit_result,
     }
     async for message in websocket:
         message = json.loads(message)
@@ -199,11 +144,11 @@ async def verse_captor(websocket: websockets.ServerConnection):
 
 
 async def main() -> None:
-    global current_url, current_count
-    current_url, current_count = argument.start_url, current_count or 1
+    global current_index, file_names
     os.makedirs(argument.folder_path, exist_ok=True)
-    server = await websockets.serve(verse_captor, "127.0.0.1", 6969)
-    console.print("SERVER IS RUNNING ! [127.0.0.1:6969]")
+    current_index, file_names = 0, os.listdir(argument.input_folder_path)
+    server = await websockets.serve(verse_captor, "127.0.0.1", 9696)
+    console.print("SERVER IS RUNNING ! [127.0.0.1:9696]")
     await halt_event.wait()
     server.close()
     await server.wait_closed()
