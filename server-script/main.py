@@ -2,7 +2,7 @@
 # PYTHON_ARGCOMPLETE_OK
 
 ########################
-#     Verse CAPTOR     #
+#     Verse Captor     #
 ########################
 
 import os
