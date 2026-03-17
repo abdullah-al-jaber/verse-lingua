@@ -7,7 +7,7 @@
 // @match        https://translate.google.com/*
 // @run-at       document-idle
 // @grant        none
-// @require      https://cdn.jsdelivr.net/npm/progressbar.js@0.8.0/dist/progressbar.min.js'
+// @require      https://cdn.jsdelivr.net/npm/progressbar.js@0.8.0/dist/progressbar.min.js
 // ==/UserScript==
 
 (async () => {
@@ -25,7 +25,8 @@
         text_too_long: "teal",
     };
     const INPUT_ELEMENT_SELECTOR = ".er8xn";
-    const OUTPUT_ELEMENT_SELECTOR = ".lRu31";
+    const WAIT_ELEMENT_SELECTOR = ".lRu31";
+    const OUTPUT_ELEMENT_SELECTOR = ".ryNqvb";
     const MAX_CHAR_LIMIT = 5000;
     const host = document.createElement("div");
     Object.assign(host, { hidden: true });
@@ -53,10 +54,10 @@
         easing: "easeInOut",
         duration: 1400,
         svgStyle: { width: "100%", height: "100%" },
-        step: (state, circle) => circle.setText(Math.round(circle.value() * 100) + "%"),
+        step: (state, circle) => circle.setText(Math.round(circle.value() * 100)),
     });
     circle.text.style.fontFamily = "monospace";
-    circle.text.style.fontSize = "5em";
+    circle.text.style.fontSize = "20px";
     circle.text.style.fontWeight = "700";
     shadow.appendChild(container);
     const wait_for_element = async (selector) => {
@@ -82,7 +83,11 @@
             input_element.value = string;
             input_element.dispatchEvent(new Event("input", { bubbles: true }));
         }
-        console.log(await wait_for_element(OUTPUT_ELEMENT_SELECTOR));
+        await wait_for_element(WAIT_ELEMENT_SELECTOR);
+        return Array.from(document.querySelectorAll(OUTPUT_ELEMENT_SELECTOR))
+            .map((span) => span.innerText.trim())
+            .filter((text) => text.length > 0)
+            .join("\n");
     };
     const translate = async (text) => {
         const lines = text.split("\n");
