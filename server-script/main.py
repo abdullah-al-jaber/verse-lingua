@@ -156,9 +156,9 @@ async def main() -> None:
     global current_index, file_names, progress, task_id
     os.makedirs(argument.output_folder_path, exist_ok=True)
     current_index, file_names = 0, os.listdir(argument.input_folder_path)
-    progress = rich.progress.Progress(console=console)
-    task_id = progress.add_task("# LINGUA  #", total=len(file_names))
-    with rich.live.Live(rich.panel.Panel(progress, title="TOTAL", width=60)):
+    progress = rich.progress.Progress()
+    task_id = progress.add_task("TOTAL", total=len(file_names))
+    with rich.live.Live(rich.panel.Panel(progress, width=60), console=console):
         server = await websockets.serve(verse_captor, "127.0.0.1", 9696)
         console.print("SERVER IS RUNNING ! [127.0.0.1:9696]")
         await halt_event.wait()
