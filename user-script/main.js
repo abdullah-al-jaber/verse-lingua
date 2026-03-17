@@ -49,11 +49,15 @@
             })
         );
     };
-    const translate = async (text) => {}
+    const translate = async (text) => {};
+    const response_progress_info = async (websocket, data) => {
+        if (!("percentage" in data)) return (progress.style.backgroundColor = STATUS_COLORS.message_data_unknown);
+        
+    };
     const response_current_job = async (websocket, data) => {
         if (!("current_index" in data && "text" in data)) return (progress.style.backgroundColor = STATUS_COLORS.message_data_unknown);
         if (document.title == "Just a moment...") return (progress.style.backgroundColor = STATUS_COLORS.cloudflare_challenge);
-        websocket.send(JSON.stringify({ type: "submit_text", data: { current_index: data.current_index,text: await translate(data.text) } }));
+        websocket.send(JSON.stringify({ type: "submit_text", data: { current_index: data.current_index, text: await translate(data.text) } }));
         websocket.send(JSON.stringify({ type: "request_current_job", data: {} }));
     };
     const websocket = new WebSocket("ws://127.0.0.1:6969");
@@ -63,6 +67,7 @@
     websocket.onmessage = async (event) => {
         const message = JSON.parse(event.data);
         const handler_mapping = {
+            response_progress_info: response_progress_info,
             response_current_job: response_current_job,
         };
         if (!("type" in message && "data" in message)) return (progress.style.backgroundColor = STATUS_COLORS.message_format_error);
@@ -70,6 +75,7 @@
         await handler_mapping[message.type](websocket, message.data);
     };
     websocket.addEventListener("open", () => {
+        setInterval(() => websocket.send(JSON.stringify({ type: "request_progress_info", data: {} })), 2000);
         websocket.send(JSON.stringify({ type: "request_current_job", data: {} }));
     });
 })();
