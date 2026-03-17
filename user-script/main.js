@@ -45,7 +45,6 @@
         width: "50px",
         height: "50px",
     });
-    var ProgressBar = require("progressbar.js");
     const circle = new ProgressBar.Circle(container, {
         strokeWidth: 10,
         trailWidth: 10,
