@@ -12,9 +12,11 @@ import typing
 import asyncio
 import argparse
 import warnings
-import urllib.parse
 
 import rich.console
+import rich.progress
+import rich.panel
+import rich.live
 import rich.traceback
 import rich_argparse
 import argcomplete
@@ -29,7 +31,6 @@ halt_event = asyncio.Event()
 blank_line = "\n"
 current_index = 0
 file_names = []
-
 
 @typing.overload
 def read_file(file_path: str, mode: typing.Literal["r"]) -> str: ...
@@ -124,6 +125,7 @@ async def submit_text(websocket: websockets.ServerConnection, data: dict) -> Non
     write_file(os.path.join(argument.output_folder_path, file_names[data["current_index"]]), data["text"], "w")
     console.print(f"TRANSLATED: {current_index}.txt ! ")
     current_index += 1
+    progress.advance(task_id)
     if current_index == len(file_names):
         await websocket.close()
         halt_event.set()
@@ -144,15 +146,18 @@ async def verse_captor(websocket: websockets.ServerConnection):
 
 
 async def main() -> None:
-    global current_index, file_names
+    global current_index, file_names, progress, task_id
     os.makedirs(argument.output_folder_path, exist_ok=True)
     current_index, file_names = 0, os.listdir(argument.input_folder_path)
-    server = await websockets.serve(verse_captor, "127.0.0.1", 9696)
-    console.print("SERVER IS RUNNING ! [127.0.0.1:9696]")
-    await halt_event.wait()
-    server.close()
-    await server.wait_closed()
-    console.print("SERVER IS STOPPED !")
+    progress = rich.progress.Progress(console=console)
+    task_id = progress.add_task("# LINGUA  #", total=len(file_names))
+    with rich.live.Live(rich.panel.Panel(progress, title="TOTAL", width=60)):
+        server = await websockets.serve(verse_captor, "127.0.0.1", 9696)
+        console.print("SERVER IS RUNNING ! [127.0.0.1:9696]")
+        await halt_event.wait()
+        server.close()
+        await server.wait_closed()
+        console.print("SERVER IS STOPPED !")
 
 
 if __name__ == "__main__":
