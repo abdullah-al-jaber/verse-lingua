@@ -115,7 +115,7 @@ def write_file(file_path: str, content: str | bytes, mode: str) -> None:
 
 
 async def request_progress_info(websocket: websockets.ServerConnection, data: dict) -> None:
-    data = {"percentage": f"{progress.tasks[task_id].percentage:.2f}%"}
+    data = {"percentage": f"{progress.tasks[task_id].percentage:.0f}%"}
     await websocket.send(json.dumps({"type": "response_progress_info", "data": data}))
 
 

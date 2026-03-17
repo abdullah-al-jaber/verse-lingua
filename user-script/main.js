@@ -35,8 +35,26 @@
     });
     document.documentElement.appendChild(host);
     const shadow = host.attachShadow({ mode: "open" });
-    const progress_bar = document.createElement("div");
-    shadow.appendChild(progress_bar);
+    const container = document.createElement("div");
+    Object.assign(container.style, {
+        width: "50px",
+        height: "50px",
+    });
+    var ProgressBar = require("progressbar.js");
+    const circle = new ProgressBar.Circle(container, {
+        strokeWidth: 10,
+        trailWidth: 10,
+        color: STATUS_COLORS.idle,
+        trailColor: "#eeeeee",
+        easing: "easeInOut",
+        duration: 1400,
+        svgStyle: { width: "100%", height: "100%" },
+        step: (state, circle) => circle.setText(circle.value() + "%"),
+    });
+    circle.text.style.fontFamily = "monospace";
+    circle.text.style.fontSize = "5em";
+    circle.text.style.fontWeight = "700";
+    shadow.appendChild(container);
     const wait_for_element = async (selector) => {
         const query = document.querySelector(selector);
         const promise = new Promise((resolve) => {
@@ -48,30 +66,35 @@
         });
         return query || (await promise);
     };
-    const progress = async (percentage) => {};
+    const progress_update_state = async (percentage) => {
+        circle.animate(progress_update_color / 100);
+    };
+    const progress_update_color = async (color) => {
+        circle.path.setAttribute("stroke", color);
+    };
     const translate = async (text) => {};
     const response_progress_info = async (websocket, data) => {
-        if (!("percentage" in data)) return (progress_bar.style.backgroundColor = STATUS_COLORS.message_data_unknown);
-        await progress_bar(data.percentage);
+        if (!("percentage" in data)) return progress_update_color(STATUS_COLORS.message_data_unknown);
+        await progress_update_state(data.percentage);
     };
     const response_current_job = async (websocket, data) => {
-        if (!("current_index" in data && "text" in data)) return (progress_bar.style.backgroundColor = STATUS_COLORS.message_data_unknown);
-        if (document.title == "Just a moment...") return (progress_bar.style.backgroundColor = STATUS_COLORS.cloudflare_challenge);
+        if (!("current_index" in data && "text" in data)) return progress_update_color(STATUS_COLORS.message_data_unknown);
+        if (document.title == "Just a moment...") return progress_update_color(STATUS_COLORS.cloudflare_challenge);
         websocket.send(JSON.stringify({ type: "submit_text", data: { current_index: data.current_index, text: await translate(data.text) } }));
         websocket.send(JSON.stringify({ type: "request_current_job", data: {} }));
     };
     const websocket = new WebSocket("ws://127.0.0.1:6969");
     websocket.onopen = () => (host.hidden = false);
     websocket.onclose = () => (host.hidden = true);
-    websocket.onerror = () => (progress_bar.style.backgroundColor = STATUS_COLORS.ws_error);
+    websocket.onerror = () => progress_update_color(STATUS_COLORS.ws_error);
     websocket.onmessage = async (event) => {
         const message = JSON.parse(event.data);
         const handler_mapping = {
             response_progress_info: response_progress_info,
             response_current_job: response_current_job,
         };
-        if (!("type" in message && "data" in message)) return (progress_bar.style.backgroundColor = STATUS_COLORS.message_format_error);
-        if (!(message.type in handler_mapping)) return (progress_bar.style.backgroundColor = STATUS_COLORS.message_type_unknown);
+        if (!("type" in message && "data" in message)) return progress_update_color(STATUS_COLORS.message_format_error);
+        if (!(message.type in handler_mapping)) return progress_update_color(STATUS_COLORS.message_type_unknown);
         await handler_mapping[message.type](websocket, message.data);
     };
     websocket.addEventListener("open", () => {
