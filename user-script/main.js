@@ -22,7 +22,7 @@
         message_data_unknown: "yellow",
         cloudflare_challenge: "green",
     };
-    const CHAR_LIMIT = 5000;
+    const MAX_CHAR_LIMIT = 5000;
     const host = document.createElement("div");
     Object.assign(host.style, {
         position: "fixed",
