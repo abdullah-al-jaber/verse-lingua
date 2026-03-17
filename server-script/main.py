@@ -117,7 +117,7 @@ async def request_current_job(websocket: websockets.ServerConnection, data: dict
     await websocket.send(json.dumps({"type": "response_current_job", "data": data}))
 
 
-async def submit_result(websocket: websockets.ServerConnection, data: dict) -> None:
+async def submit_text(websocket: websockets.ServerConnection, data: dict) -> None:
     global current_index
     assert "current_index" in data, "Current Index isn't found !"
     assert "text" in data, "Text isn't found !"
@@ -132,7 +132,7 @@ async def submit_result(websocket: websockets.ServerConnection, data: dict) -> N
 async def verse_captor(websocket: websockets.ServerConnection):
     handler_mapping = {
         "request_current_job": request_current_job,
-        "submit_result": submit_result,
+        "submit_text": submit_text,
     }
     async for message in websocket:
         message = json.loads(message)
