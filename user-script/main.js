@@ -38,16 +38,15 @@
     const progress_bar = document.createElement("div");
     shadow.appendChild(progress_bar);
     const wait_for_element = async (selector) => {
-        return (
-            document.querySelector(selector) ||
-            new Promise((resolve) => {
-                const observer = new MutationObserver(() => {
-                    const element = document.querySelector(selector);
-                    if (element) (observer.disconnect(), resolve(element));
-                });
-                observer.observe(document, { childList: true, subtree: true });
-            })
-        );
+        const query = document.querySelector(selector);
+        const promise = new Promise((resolve) => {
+            const observer = new MutationObserver(() => {
+                const element = document.querySelector(selector);
+                if (element) (observer.disconnect(), resolve(element));
+            });
+            observer.observe(document, { childList: true, subtree: true });
+        });
+        return query || (await promise);
     };
     const progress = async (percentage) => {};
     const translate = async (text) => {};
