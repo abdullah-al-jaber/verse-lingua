@@ -5,6 +5,7 @@
 #     Verse Lingua     #
 ########################
 
+import re
 import os
 import sys
 import json
@@ -114,6 +115,11 @@ def write_file(file_path: str, content: str | bytes, mode: str) -> None:
         file.write(content)
 
 
+def number_search(string: str):
+    match = re.search(r"\d+", string)
+    return int(match.group()) if match else 0
+
+
 async def request_progress_info(websocket: websockets.ServerConnection, data: dict) -> None:
     data = {"percentage": f"{progress.tasks[task_id].percentage:.0f}"}
     await websocket.send(json.dumps({"type": "response_progress_info", "data": data}))
@@ -157,6 +163,7 @@ async def main() -> None:
     global current_index, file_names, progress, task_id
     os.makedirs(argument.output_folder_path, exist_ok=True)
     current_index, file_names = 0, os.listdir(argument.input_folder_path)
+    file_names.sort(key=number_search)
     progress = rich.progress.Progress()
     task_id = progress.add_task("TOTAL", total=len(file_names))
     with rich.live.Live(rich.panel.Panel(progress, width=60), console=console):

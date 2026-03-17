@@ -14,16 +14,17 @@
     "use strict";
     if (window.top !== window.self) return void 0;
     const STATUS_COLORS = {
-        waiting: "cyan",
         idle: "magenta",
         ws_error: "red",
         message_format_error: "brown",
         message_type_unknown: "orange",
         message_data_unknown: "yellow",
         cloudflare_challenge: "green",
+        waiting: "cyan",
         wrong_site: "gray",
+        text_too_long: "teal",
     };
-    const INPUT_ELEMENT_SELECTOR = "";
+    const INPUT_ELEMENT_SELECTOR = ".er8xn";
     const OUTPUT_ELEMENT_SELECTOR = "";
     const MAX_CHAR_LIMIT = 5000;
     const host = document.createElement("div");
@@ -75,7 +76,12 @@
     const progress_update_color = async (color) => {
         circle.path.setAttribute("stroke", color);
     };
-    const translate = async (text) => {};
+    const translate_text = async (text) => {};
+    const translate = async (text) => {
+        const chunks
+        if (text.length > MAX_CHAR_LIMIT) return progress_update_color(STATUS_COLORS.text_too_long);
+
+    };
     const response_progress_info = async (websocket, data) => {
         if (!("percentage" in data)) return progress_update_color(STATUS_COLORS.message_data_unknown);
         await progress_update_state(data.percentage);
