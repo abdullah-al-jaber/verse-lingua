@@ -115,7 +115,7 @@ def write_file(file_path: str, content: str | bytes, mode: str) -> None:
 
 
 async def request_progress_info(websocket: websockets.ServerConnection, data: dict) -> None:
-    data = {"percentage": progress.tasks[task_id].completed}
+    data = {"percentage": f"{progress.tasks[task_id].percentage:.2f}"}
     await websocket.send(json.dumps({"type": "response_progress_info", "data": data}))
 
 
@@ -128,8 +128,9 @@ async def submit_text(websocket: websockets.ServerConnection, data: dict) -> Non
     global current_index
     assert "current_index" in data, "Current Index isn't found !"
     assert "text" in data, "Text isn't found !"
+    assert current_index == data["current_index"], "Current Index Mismatch !"
     write_file(os.path.join(argument.output_folder_path, file_names[data["current_index"]]), data["text"], "w")
-    console.print(f"TRANSLATED: {current_index}.txt ! ")
+    console.print(f"TRANSLATED: {file_names[current_index]} ! ")
     current_index += 1
     progress.advance(task_id)
     if current_index == len(file_names):
