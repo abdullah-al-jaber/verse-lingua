@@ -28,38 +28,38 @@
     const WAIT_ELEMENT_SELECTOR = ".lRu31";
     const OUTPUT_ELEMENT_SELECTOR = ".ryNqvb";
     const MAX_CHAR_LIMIT = 5000;
-    // const host = document.createElement("div");
-    // Object.assign(host, { hidden: true });
-    // Object.assign(host.style, {
-    //     position: "fixed",
-    //     right: "20px",
-    //     bottom: "20px",
-    //     zIndex: "9999",
-    //     border: "2px solid black",
-    //     borderRadius: "50px",
-    // });
-    // document.documentElement.appendChild(host);
-    // const shadow = host.attachShadow({ mode: "open" });
-    // const container = document.createElement("div");
-    // Object.assign(container.style, {
-    //     width: "50px",
-    //     height: "50px",
-    // });
-    // var ProgressBar = require("progressbar.js");
-    // const circle = new ProgressBar.Circle(container, {
-    //     strokeWidth: 10,
-    //     trailWidth: 10,
-    //     color: STATUS_COLORS.idle,
-    //     trailColor: "#eeeeee",
-    //     easing: "easeInOut",
-    //     duration: 1400,
-    //     svgStyle: { width: "100%", height: "100%" },
-    //     step: (state, circle) => circle.setText(Math.round(circle.value() * 100)),
-    // });
-    // circle.text.style.fontFamily = "monospace";
-    // circle.text.style.fontSize = "20px";
-    // circle.text.style.fontWeight = "700";
-    // shadow.appendChild(container);
+    const host = document.createElement("div");
+    Object.assign(host, { hidden: true });
+    Object.assign(host.style, {
+        position: "fixed",
+        right: "20px",
+        bottom: "20px",
+        zIndex: "9999",
+        border: "2px solid black",
+        borderRadius: "50px",
+    });
+    document.documentElement.appendChild(host);
+    const shadow = host.attachShadow({ mode: "open" });
+    const container = document.createElement("div");
+    Object.assign(container.style, {
+        width: "50px",
+        height: "50px",
+    });
+    var ProgressBar = require("progressbar.js");
+    const circle = new ProgressBar.Circle(container, {
+        strokeWidth: 10,
+        trailWidth: 10,
+        color: STATUS_COLORS.idle,
+        trailColor: "#eeeeee",
+        easing: "easeInOut",
+        duration: 1400,
+        svgStyle: { width: "100%", height: "100%" },
+        step: (state, circle) => circle.setText(Math.round(circle.value() * 100)),
+    });
+    circle.text.style.fontFamily = "monospace";
+    circle.text.style.fontSize = "20px";
+    circle.text.style.fontWeight = "700";
+    shadow.appendChild(container);
     const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     const wait_for_element = async (selector) => {
         const query = document.querySelector(selector);
