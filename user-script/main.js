@@ -102,7 +102,7 @@
         if (current_chunk) chunks.push(current_chunk);
         let output = "";
         for (const chunk in chunks) {
-            output += (output ? "\n" : "") + (await translate(chunk));
+            output += (output ? "\n" : "") + (await translate_text(chunk));
         }
         return output;
     };
