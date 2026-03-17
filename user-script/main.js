@@ -126,7 +126,7 @@
         websocket.send(JSON.stringify({ type: "submit_text", data: { current_index: data.current_index, text: await translate(data.text) } }));
         websocket.send(JSON.stringify({ type: "request_current_job", data: {} }));
     };
-    const websocket = new WebSocket("ws://127.0.0.1:6969");
+    const websocket = new WebSocket("ws://127.0.0.1:9696");
     websocket.onopen = () => (host.hidden = false);
     websocket.onclose = () => (host.hidden = true);
     websocket.onerror = () => progress_update_color(STATUS_COLORS.ws_error);
