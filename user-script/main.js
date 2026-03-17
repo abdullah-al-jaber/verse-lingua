@@ -49,7 +49,7 @@
         easing: "easeInOut",
         duration: 1400,
         svgStyle: { width: "100%", height: "100%" },
-        step: (state, circle) => circle.setText(circle.value() + "%"),
+        step: (state, circle) => circle.setText(Math.round(circle.value() * 100) + "%"),
     });
     circle.text.style.fontFamily = "monospace";
     circle.text.style.fontSize = "5em";
@@ -67,7 +67,7 @@
         return query || (await promise);
     };
     const progress_update_state = async (percentage) => {
-        circle.animate(progress_update_color / 100);
+        circle.animate(percentage / 100);
     };
     const progress_update_color = async (color) => {
         circle.path.setAttribute("stroke", color);
