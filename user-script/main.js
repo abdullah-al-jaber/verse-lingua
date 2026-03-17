@@ -52,7 +52,6 @@
     const translate = async (text) => {};
     const response_progress_info = async (websocket, data) => {
         if (!("percentage" in data)) return (progress.style.backgroundColor = STATUS_COLORS.message_data_unknown);
-        
     };
     const response_current_job = async (websocket, data) => {
         if (!("current_index" in data && "text" in data)) return (progress.style.backgroundColor = STATUS_COLORS.message_data_unknown);
