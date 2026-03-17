@@ -32,6 +32,7 @@ blank_line = "\n"
 current_index = 0
 file_names = []
 
+
 @typing.overload
 def read_file(file_path: str, mode: typing.Literal["r"]) -> str: ...
 @typing.overload
@@ -113,6 +114,11 @@ def write_file(file_path: str, content: str | bytes, mode: str) -> None:
         file.write(content)
 
 
+async def request_progress_info(websocket: websockets.ServerConnection, data: dict) -> None:
+    data = {"percentage": progress.tasks[task_id].completed}
+    await websocket.send(json.dumps({"type": "response_progress_info", "data": data}))
+
+
 async def request_current_job(websocket: websockets.ServerConnection, data: dict) -> None:
     data = {"current_index": current_index, "text": read_file(os.path.join(argument.input_folder_path, file_names[current_index]), "r")}
     await websocket.send(json.dumps({"type": "response_current_job", "data": data}))
@@ -133,6 +139,7 @@ async def submit_text(websocket: websockets.ServerConnection, data: dict) -> Non
 
 async def verse_captor(websocket: websockets.ServerConnection):
     handler_mapping = {
+        "request_progress_info": request_progress_info,
         "request_current_job": request_current_job,
         "submit_text": submit_text,
     }
