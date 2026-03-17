@@ -28,38 +28,39 @@
     const WAIT_ELEMENT_SELECTOR = ".lRu31";
     const OUTPUT_ELEMENT_SELECTOR = ".ryNqvb";
     const MAX_CHAR_LIMIT = 5000;
-    const host = document.createElement("div");
-    Object.assign(host, { hidden: true });
-    Object.assign(host.style, {
-        position: "fixed",
-        right: "20px",
-        bottom: "20px",
-        zIndex: "9999",
-        border: "2px solid black",
-        borderRadius: "50px",
-    });
-    document.documentElement.appendChild(host);
-    const shadow = host.attachShadow({ mode: "open" });
-    const container = document.createElement("div");
-    Object.assign(container.style, {
-        width: "50px",
-        height: "50px",
-    });
-    var ProgressBar = require("progressbar.js");
-    const circle = new ProgressBar.Circle(container, {
-        strokeWidth: 10,
-        trailWidth: 10,
-        color: STATUS_COLORS.idle,
-        trailColor: "#eeeeee",
-        easing: "easeInOut",
-        duration: 1400,
-        svgStyle: { width: "100%", height: "100%" },
-        step: (state, circle) => circle.setText(Math.round(circle.value() * 100)),
-    });
-    circle.text.style.fontFamily = "monospace";
-    circle.text.style.fontSize = "20px";
-    circle.text.style.fontWeight = "700";
-    shadow.appendChild(container);
+    // const host = document.createElement("div");
+    // Object.assign(host, { hidden: true });
+    // Object.assign(host.style, {
+    //     position: "fixed",
+    //     right: "20px",
+    //     bottom: "20px",
+    //     zIndex: "9999",
+    //     border: "2px solid black",
+    //     borderRadius: "50px",
+    // });
+    // document.documentElement.appendChild(host);
+    // const shadow = host.attachShadow({ mode: "open" });
+    // const container = document.createElement("div");
+    // Object.assign(container.style, {
+    //     width: "50px",
+    //     height: "50px",
+    // });
+    // var ProgressBar = require("progressbar.js");
+    // const circle = new ProgressBar.Circle(container, {
+    //     strokeWidth: 10,
+    //     trailWidth: 10,
+    //     color: STATUS_COLORS.idle,
+    //     trailColor: "#eeeeee",
+    //     easing: "easeInOut",
+    //     duration: 1400,
+    //     svgStyle: { width: "100%", height: "100%" },
+    //     step: (state, circle) => circle.setText(Math.round(circle.value() * 100)),
+    // });
+    // circle.text.style.fontFamily = "monospace";
+    // circle.text.style.fontSize = "20px";
+    // circle.text.style.fontWeight = "700";
+    // shadow.appendChild(container);
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     const wait_for_element = async (selector) => {
         const query = document.querySelector(selector);
         const promise = new Promise((resolve) => {
@@ -77,16 +78,20 @@
     const progress_update_color = async (color) => {
         circle.path.setAttribute("stroke", color);
     };
-    let translate_text = async (text) => {
+    const translate_text = async (text) => {
         const input_element = await wait_for_element(INPUT_ELEMENT_SELECTOR);
         for (const string of ["", text]) {
             input_element.value = string;
             input_element.dispatchEvent(new Event("input", { bubbles: true }));
+            await sleep(1000);
         }
         await wait_for_element(WAIT_ELEMENT_SELECTOR);
         return Array.from(document.querySelectorAll(OUTPUT_ELEMENT_SELECTOR))
             .map((span) => span.innerText.trim())
             .filter((text) => text.length > 0)
+            .join("\n")
+            .split("\n")
+            .filter((line) => line.trim() !== "")
             .join("\n");
     };
     const translate = async (text) => {
@@ -106,7 +111,7 @@
         }
         if (current_chunk) chunks.push(current_chunk);
         let output = "";
-        for (const chunk in chunks) {
+        for (const chunk of chunks) {
             output += (output ? "\n" : "") + (await translate_text(chunk));
         }
         return output;
