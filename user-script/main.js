@@ -22,6 +22,8 @@
         message_data_unknown: "yellow",
         cloudflare_challenge: "green",
     };
+    const INPUT_ELEMENT_SELECTOR = "";
+    const OUTPUT_ELEMENT_SELECTOR = "";
     const MAX_CHAR_LIMIT = 5000;
     const host = document.createElement("div");
     Object.assign(host, { hidden: true });
@@ -80,6 +82,7 @@
     const response_current_job = async (websocket, data) => {
         if (!("current_index" in data && "text" in data)) return progress_update_color(STATUS_COLORS.message_data_unknown);
         if (document.title == "Just a moment...") return progress_update_color(STATUS_COLORS.cloudflare_challenge);
+        if (window.location.hostname != "translate.google.com") return (window.location.href = "https://translate.google.com/");
         websocket.send(JSON.stringify({ type: "submit_text", data: { current_index: data.current_index, text: await translate(data.text) } }));
         websocket.send(JSON.stringify({ type: "request_current_job", data: {} }));
     };
