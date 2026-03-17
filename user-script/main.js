@@ -25,7 +25,7 @@
         text_too_long: "teal",
     };
     const INPUT_ELEMENT_SELECTOR = ".er8xn";
-    const OUTPUT_ELEMENT_SELECTOR = "";
+    const OUTPUT_ELEMENT_SELECTOR = ".lRu31";
     const MAX_CHAR_LIMIT = 5000;
     const host = document.createElement("div");
     Object.assign(host, { hidden: true });
@@ -76,11 +76,35 @@
     const progress_update_color = async (color) => {
         circle.path.setAttribute("stroke", color);
     };
-    const translate_text = async (text) => {};
+    let translate_text = async (text) => {
+        const input_element = await wait_for_element(INPUT_ELEMENT_SELECTOR);
+        for (const string of ["", text]) {
+            input_element.value = string;
+            input_element.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+        console.log(await wait_for_element(OUTPUT_ELEMENT_SELECTOR));
+    };
     const translate = async (text) => {
-        const chunks
-        if (text.length > MAX_CHAR_LIMIT) return progress_update_color(STATUS_COLORS.text_too_long);
-
+        const lines = text.split("\n");
+        const chunks = [];
+        let current_chunk = "";
+        for (const line of lines) {
+            if (line.length > MAX_CHAR_LIMIT) {
+                progress_update_color(STATUS_COLORS.text_too_long);
+                throw new Error("TEXT TOO LONG !");
+            } else if (current_chunk.length + line.length + 1 > MAX_CHAR_LIMIT) {
+                if (current_chunk) chunks.push(current_chunk);
+                current_chunk = line;
+            } else {
+                current_chunk += (current_chunk ? "\n" : "") + line;
+            }
+        }
+        if (current_chunk) chunks.push(current_chunk);
+        let output = "";
+        for (const chunk in chunks) {
+            output += (output ? "\n" : "") + (await translate(chunk));
+        }
+        return output;
     };
     const response_progress_info = async (websocket, data) => {
         if (!("percentage" in data)) return progress_update_color(STATUS_COLORS.message_data_unknown);
