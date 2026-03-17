@@ -21,6 +21,7 @@
         message_type_unknown: "orange",
         message_data_unknown: "yellow",
         cloudflare_challenge: "green",
+        wrong_site: "gray",
     };
     const INPUT_ELEMENT_SELECTOR = "";
     const OUTPUT_ELEMENT_SELECTOR = "";
@@ -82,7 +83,7 @@
     const response_current_job = async (websocket, data) => {
         if (!("current_index" in data && "text" in data)) return progress_update_color(STATUS_COLORS.message_data_unknown);
         if (document.title == "Just a moment...") return progress_update_color(STATUS_COLORS.cloudflare_challenge);
-        if (window.location.hostname != "translate.google.com") return (window.location.href = "https://translate.google.com/");
+        if (window.location.hostname != "translate.google.com") return progress_update_color(STATUS_COLORS.wrong_site);
         websocket.send(JSON.stringify({ type: "submit_text", data: { current_index: data.current_index, text: await translate(data.text) } }));
         websocket.send(JSON.stringify({ type: "request_current_job", data: {} }));
     };
