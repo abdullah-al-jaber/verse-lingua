@@ -36,6 +36,7 @@
         zIndex: "9999",
         border: "2px solid black",
         borderRadius: "50px",
+        backgroundColor: "white",
     });
     document.documentElement.appendChild(host);
     const shadow = host.attachShadow({ mode: "open" });
