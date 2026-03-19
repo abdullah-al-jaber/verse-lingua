@@ -137,9 +137,10 @@ async def submit_text(websocket: websockets.ServerConnection, data: dict) -> Non
     assert current_index == data["current_index"], "Current Index Mismatch !"
     write_file(os.path.join(argument.output_folder_path, file_names[data["current_index"]]), data["text"], "w")
     console.print(f"TRANSLATED: {file_names[current_index]} ! ")
-    current_index = min(current_index + 1, len(file_names) - 1)
+    current_index += 1
     progress.advance(task_id)
     if current_index == len(file_names):
+        current_index = len(file_names) - 1
         await websocket.close()
         halt_event.set()
 
