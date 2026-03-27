@@ -13,7 +13,7 @@ Requirements to execute the script :-
 > Execute the following command for python modules :-
 >
 > ```
-> pip install rich rich-argparse argcomplete websockets
+> pip install rich rich-argparse websockets
 > ```
 >
 > Browser Extension :- `Tampermonkey`
