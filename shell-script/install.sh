@@ -2,6 +2,7 @@
 MAIN_NAME="verse-lingua"
 SERVER_URL="https://raw.githubusercontent.com/abdullah-al-jaber/$MAIN_NAME/vanilla/server-script/main.py"
 USER_URL="https://raw.githubusercontent.com/abdullah-al-jaber/$MAIN_NAME/vanilla/user-script/main.js"
+MAIN_COMPLETION_URL="https://raw.githubusercontent.com/abdullah-al-jaber/$MAIN_NAME/vanilla/shell-script/completion.fish"
 SERVER_PATH="/usr/bin/$MAIN_NAME"
 USER_PATH="/android/$MAIN_NAME.js"
 MAIN_COMPLETION_PATH="/etc/fish/completions/$MAIN_NAME.fish"
@@ -19,9 +20,9 @@ chmod +x "$SERVER_PATH" || {
 	echo "Failed to make server script executable !"
 	exit 3
 }
-register-python-argcomplete --shell fish "$MAIN_NAME" >"$MAIN_COMPLETION_PATH" || {
-	echo "Failed to generate FISH completions !"
-	exit 4
+curl -sSL "$MAIN_COMPLETION_URL" -o "$MAIN_COMPLETION_PATH" || {
+	echo "Failed to download the completion !"
+	exit 2
 }
 
 echo "Successfully installed server script !"
