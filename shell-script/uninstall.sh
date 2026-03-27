@@ -17,12 +17,14 @@ rm "$MAIN_COMPLETION_PATH" || {
 	echo "Failed to remove FISH completions !"
 	exit 3
 }
+
 echo "Successfully uninstalled server script !"
 
-rm -f $USER_PATH || {
+rm -f $USER_PATH "$MAIN_NAME.js" || {
 	echo "Failed to remove user script !"
 	exit 4
 }
+
 echo "Successfully removed server script !"
 
 # Final Version

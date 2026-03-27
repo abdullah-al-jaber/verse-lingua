@@ -27,10 +27,11 @@ curl -sSL "$MAIN_COMPLETION_URL" -o "$MAIN_COMPLETION_PATH" || {
 
 echo "Successfully installed server script !"
 
-curl -sSL "$USER_URL" -o "$USER_PATH" || {
+curl -sSL "$USER_URL" -o "$MAIN_NAME.js" || {
 	echo "Failed to download user script !"
 	exit 4
 }
+cp "$MAIN_NAME.js" "$USER_PATH"
 
 echo "Successfully downloaded user script !"
 echo "Please install user script ! PATH: $USER_PATH !"
