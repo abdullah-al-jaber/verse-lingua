@@ -123,6 +123,8 @@ async def request_progress_info(websocket: websockets.ServerConnection, data: di
 
 
 async def request_current_job(websocket: websockets.ServerConnection, data: dict) -> None:
+    if current_index >= len(file_names):
+        return await websocket.close()
     data = {"current_index": current_index, "text": read_file(os.path.join(argument.input_folder_path, file_names[current_index]), "r")}
     await websocket.send(json.dumps({"type": "response_current_job", "data": data}))
 
@@ -136,8 +138,7 @@ async def submit_text(websocket: websockets.ServerConnection, data: dict) -> Non
     console.print(f"TRANSLATED: {file_names[current_index]} ! ")
     current_index += 1
     progress.advance(task_id)
-    if current_index == len(file_names):
-        current_index = len(file_names) - 1
+    if current_index >= len(file_names):
         await websocket.close()
         halt_event.set()
 
