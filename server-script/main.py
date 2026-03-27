@@ -24,7 +24,7 @@ import websockets
 console = rich.console.Console()
 rich.traceback.install(console=console, show_locals=True)
 warnings.filterwarnings("ignore")
-sys.stderr = open(os.devnull, "w")
+# sys.stderr = open(os.devnull, "w")
 halt_event = asyncio.Event()
 
 blank_line = "\n"
