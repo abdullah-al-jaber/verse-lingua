@@ -118,13 +118,13 @@ def number_search(string: str):
 
 
 async def request_progress_info(websocket: websockets.ServerConnection, data: dict) -> None:
+    if halt_event.is_set(): return await websocket.close()
     data = {"percentage": f"{progress.tasks[task_id].percentage:.0f}"}
     await websocket.send(json.dumps({"type": "response_progress_info", "data": data}))
 
 
 async def request_current_job(websocket: websockets.ServerConnection, data: dict) -> None:
-    if current_index >= len(file_names):
-        return await websocket.close()
+    if halt_event.is_set(): return await websocket.close()
     data = {"current_index": current_index, "text": read_file(os.path.join(argument.input_folder_path, file_names[current_index]), "r")}
     await websocket.send(json.dumps({"type": "response_current_job", "data": data}))
 
