@@ -23,15 +23,6 @@
         waiting: "cyan",
         text_too_long: "teal",
     };
-    Object.defineProperty(navigator, "clipboard", {
-        value: {
-            writeText(text) {
-                window.clip_board = text;
-                return Promise.resolve();
-            }
-        },
-        configurable: true
-    });
     const INPUT_ELEMENT_SELECTOR = "textarea[aria-label='Source text']";
     const WAIT_ELEMENT_SELECTOR = "div.lRu31";
     const COPY_ELEMENT_SELECTOR = "button[aria-label='Copy translation']";
@@ -96,10 +87,11 @@
     };
     const progress_update_color = async (color) => {
         circle.path.setAttribute("stroke", color);
+        circle.text.style.color = color;
     };
     const translate_text = async (text) => {
         const input_element = await wait_for_element(INPUT_ELEMENT_SELECTOR);
-        input_element.value = string;
+        input_element.value = text;
         input_element.dispatchEvent(new Event("input", {
             bubbles: true
         }));
@@ -109,7 +101,7 @@
         (await wait_for_element(CLEAR_ELEMENT_SELECTOR)).click();
         if (window.bfr_bk == window.clip_board) await sleep(1000);
         if (document.querySelector(WAIT_ELEMENT_SELECTOR)) await sleep(500);
-        return (window.clip_board != window.bfr_bk) ? window.clip_board : "CLIPBOARD COPY FAILURE";
+        return (window.clip_board != window.bfr_bk) ? window.clip_board : translate_text(text);
     };
     const translate = async (text) => {
         const lines = text.split("\n");
@@ -173,6 +165,15 @@
         await handler_mapping[message.type](websocket, message.data);
     };
     websocket.addEventListener("open", () => {
+        Object.defineProperty(navigator, "clipboard", {
+            value: {
+                writeText(text) {
+                    window.clip_board = text;
+                    return Promise.resolve();
+                }
+            },
+            configurable: true
+        });
         setInterval(() => websocket.send(JSON.stringify({
             type: "request_progress_info",
             data: {}
