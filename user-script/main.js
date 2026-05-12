@@ -33,13 +33,13 @@
     });
     Object.assign(host.style, {
         width: "100vw",
-        height: "5px",
+        height: "10px",
         position: "fixed",
         left: "0px",
         top: "0px",
         zIndex: "9999",
         border: `1px solid ${STATUS_COLORS.idle}`,
-        backgroundColor: "gray",
+        backgroundColor: "white",
         boxSizing: "border-box",
         overflow: "hidden",
     });
@@ -50,7 +50,7 @@
     const progress_bar = document.createElement("div");
     Object.assign(progress_bar.style, {
         width: "0%",
-        height: "5px",
+        height: "10px",
         backgroundColor: STATUS_COLORS.idle,
         transition: "width 0.3s ease-in-out"
     });
@@ -163,6 +163,10 @@
                 }
             },
             configurable: true
+        });
+        Object.assign(document.body.style, {
+            position: "relative",
+            top: "10px"
         });
         websocket.send(JSON.stringify({
             type: "request_progress_info",
