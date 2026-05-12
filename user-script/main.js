@@ -38,8 +38,8 @@
         left: "0px",
         top: "0px",
         zIndex: "9999",
-        border: `1px solid ${STATUS_COLORS.idle}`,
-        backgroundColor: "white",
+        backgroundColor: `color-mix(in srgb, ${STATUS_COLORS.idle} 20%, transparent)`,
+        borderBottom: "2px double gray",
         boxSizing: "border-box",
         overflow: "hidden",
     });
@@ -74,7 +74,7 @@
         progress_bar.style.width = `${percentage}%`;
     };
     const progress_update_color = async (color) => {
-        host.style.borderColor = color;
+        host.style.backgroundColor = `color-mix(in srgb, ${color} 20%, transparent)`;
         progress_bar.style.backgroundColor = color;
     };
     const translate_text = async (text) => {
