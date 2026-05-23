@@ -39,9 +39,10 @@
         top: "0px",
         zIndex: "9999",
         backgroundColor: `color-mix(in srgb, ${STATUS_COLORS.idle} 20%, transparent)`,
-        borderBottom: "2px double gray",
+        outline: "2px solid black",
+        borderBottom: "5px double white",
         boxSizing: "border-box",
-        overflow: "hidden",
+        overflow: "hidden"
     });
     document.documentElement.appendChild(host);
     const shadow = host.attachShadow({
