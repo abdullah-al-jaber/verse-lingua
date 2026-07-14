@@ -15,4 +15,4 @@ rm "$MAIN_COMPLETION_PATH" || {
     echo "FAILURE: rm \"$MAIN_COMPLETION_PATH\" !" && exit
 }
 
-echo "SUCCESS: ALL DONE !"
+echo "SUCCESS: UNINSTALL DONE !"

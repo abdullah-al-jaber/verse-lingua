@@ -21,4 +21,4 @@ curl -sSL "$MAIN_COMPLETION_URL" -o "$MAIN_COMPLETION_PATH" || {
     echo "FAILURE: curl \"$MAIN_COMPLETION_URL\" -o \"$MAIN_COMPLETION_PATH\" !" && exit
 }
 
-echo "SUCCESS: ALL DONE !"
+echo "SUCCESS: INSTALL DONE !"

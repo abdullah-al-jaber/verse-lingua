@@ -11,6 +11,8 @@ import json
 import typing
 import asyncio
 import argparse
+import urllib.parse
+
 
 import rich.console
 import rich.progress
@@ -18,15 +20,14 @@ import rich.panel
 import rich.live
 import rich.traceback
 import rich_argparse
-import websockets
+import aiohttp
 
 console = rich.console.Console()
 rich.traceback.install(console=console, show_locals=True)
 sys.stderr = open(os.devnull, "w")
 
 blank_line = "\n"
-current_index = 0
-file_names = []
+blank_string = ""
 
 
 @typing.overload
@@ -56,6 +57,10 @@ class custom_argument_parser(argparse.ArgumentParser):
 class custom_argument_namespace(argparse.Namespace):
     input_folder_path: str
     output_folder_path: str
+    input_language: str
+    output_language: str
+    worker_count: int
+    show_locals: bool
 
 
 def input_folder_path_validator(input_folder_path: str) -> str:
@@ -70,6 +75,16 @@ def output_folder_path_validator(folder_path: str) -> str:
     if os.path.isdir(folder_path) and len(os.listdir(folder_path)) != 0:
         raise argparse.ArgumentTypeError(f"Output Folder isn't empty ! [OUTPUT FOLDER PATH: '{folder_path}']")
     return folder_path
+
+
+def number_validator(number: str) -> int:
+    try:
+        number = int(number)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"Number must be integer ! [NUMBER: '{number}']")
+    if number <= 0:
+        raise argparse.ArgumentTypeError(f"Number must be  non-zero positive value ! [NUMBER: '{number}']")
+    return number
 
 
 argument_parser = custom_argument_parser(
@@ -96,7 +111,45 @@ argument_parser.add_argument(
     required=True,
 )
 
+argument_parser.add_argument(
+    "--input-language",
+    type=str,
+    metavar="LANG",
+    default="auto",
+    help="Language of input novels chapter texts",
+)
+
+argument_parser.add_argument(
+    "--output-language",
+    type=str,
+    metavar="LANG",
+    default="en",
+    help="Language of output novels chapter texts",
+)
+
+argument_parser.add_argument(
+    "--worker-count",
+    type=number_validator,
+    metavar="NUMBER",
+    default=5,
+    help="Number of workers for verse lingua",
+)
+
+argument_parser.add_argument(
+    "--show-locals",
+    action="store_true",
+    help="Show local variables for rich.traceback",
+)
+
+argument_parser.add_argument(
+    "--help",
+    action="help",
+    help="Show this help message and exit",
+)
+
 argument = argument_parser.parse_args(namespace=custom_argument_namespace())
+
+rich.traceback.install(console=console, show_locals=argument.show_locals)
 
 
 def read_file(file_path: str, mode: str) -> str | bytes:
@@ -109,66 +162,65 @@ def write_file(file_path: str, content: str | bytes, mode: str) -> None:
         file.write(content)
 
 
-def number_search(string: str):
+def number_search(string: str) -> int:
     match = re.search(r"\d+", string)
     return int(match.group()) if match else 0
 
 
-async def request_progress_info(websocket: websockets.ServerConnection, data: dict) -> None:
-    if halt_event.is_set(): return await websocket.close()
-    data = {"percentage": f"{progress.tasks[task_id].percentage:.0f}"}
-    await websocket.send(json.dumps({"type": "response_progress_info", "data": data}))
+def split_text(text: str, limit: int) -> list[str]:
+    chunks, chunk = [], ""
+    for line in text.splitlines(keepends=True):
+        if len(line) > limit:
+            raise Exception("Line can't be broken !")
+        if len(chunk) + len(line) > limit:
+            chunks.append(chunk)
+            chunk = ""
+        chunk += line
+    if chunk:
+        chunks.append(chunk)
+    return chunks
 
 
-async def request_current_job(websocket: websockets.ServerConnection, data: dict) -> None:
-    if halt_event.is_set(): return await websocket.close()
-    data = {"current_index": current_index, "text": read_file(os.path.join(argument.input_folder_path, file_names[current_index]), "r")}
-    await websocket.send(json.dumps({"type": "response_current_job", "data": data}))
+async def translate_text(text: str, session: aiohttp.ClientSession) -> str:
+    url = "https://translate.googleapis.com/translate_a/single"
+    params = {"client": "gtx", "sl": argument.input_language, "tl": argument.output_language, "dt": "t", "q": text}
+    async with session.get(url, params=params) as response:
+        response.raise_for_status()
+        data = await response.json()
+        text = blank_string.join(block[0] for block in data[0])
+        return text
 
 
-async def submit_text(websocket: websockets.ServerConnection, data: dict) -> None:
-    global current_index
-    assert "current_index" in data, "Current Index isn't found !"
-    assert "text" in data, "Text isn't found !"
-    assert current_index == data["current_index"], "Current Index Mismatch !"
-    write_file(os.path.join(argument.output_folder_path, file_names[data["current_index"]]), data["text"], "w")
-    console.print(f"TRANSLATED: {file_names[current_index]} ! ")
-    current_index += 1
-    progress.advance(task_id)
-    if current_index >= len(file_names):
-        await websocket.close()
-        halt_event.set()
+async def translate(file_name: str, semaphore: asyncio.Semaphore) -> None:
+    async with semaphore:
+        input_file_path = os.path.join(argument.input_folder_path, file_name)
+        output_file_path = os.path.join(argument.output_folder_path, file_name)
+        native_text = read_file(input_file_path, "r")
+        async with aiohttp.ClientSession() as session:
+            tasks = [translate_text(chunk.strip(), session) for chunk in split_text(native_text, 5000)]
+            foreign_text = blank_line.join(await asyncio.gather(*tasks))
+        write_file(output_file_path, foreign_text, "w")
+        console.print(f"SUCCESS: {file_name}")
+        progress.advance(task_id)
 
 
-async def verse_captor(websocket: websockets.ServerConnection):
-    handler_mapping = {
-        "request_progress_info": request_progress_info,
-        "request_current_job": request_current_job,
-        "submit_text": submit_text,
-    }
-    async for message in websocket:
-        message = json.loads(message)
-        assert "type" in message, "Message Type isn't found !"
-        assert "data" in message, "Message Data isn't found !"
-        assert message["type"] in handler_mapping, "Message Type isn't known !"
-        if message["type"] in handler_mapping:
-            await handler_mapping[message["type"]](websocket, message["data"])
+async def verse_lingua(file_names: list[str]) -> None:
+    tasks = []
+    semaphore = asyncio.Semaphore(argument.worker_count)
+    for file_name in file_names:
+        tasks.append(translate(file_name, semaphore))
+    await asyncio.gather(*tasks)
 
 
 async def main() -> None:
-    global current_index, file_names, progress, task_id
+    global progress, task_id
     os.makedirs(argument.output_folder_path, exist_ok=True)
-    current_index, file_names = 0, os.listdir(argument.input_folder_path)
+    file_names = os.listdir(argument.input_folder_path)
     file_names.sort(key=number_search)
     progress = rich.progress.Progress()
     task_id = progress.add_task("TOTAL", total=len(file_names))
     with rich.live.Live(rich.panel.Panel(progress, width=60), console=console):
-        server = await websockets.serve(verse_captor, "127.0.0.1", 9696)
-        console.print("SERVER IS RUNNING ! [127.0.0.1:9696]")
-        await halt_event.wait()
-        server.close()
-        await server.wait_closed()
-        console.print("SERVER IS STOPPED !")
+        await verse_lingua(file_names)
 
 
 if __name__ == "__main__":
