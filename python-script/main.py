@@ -20,7 +20,7 @@ import rich.panel
 import rich.live
 import rich.traceback
 import rich_argparse
-import aiohttp
+import googletrans
 
 console = rich.console.Console()
 rich.traceback.install(console=console, show_locals=True)
@@ -181,14 +181,9 @@ def split_text(text: str, limit: int) -> list[str]:
     return chunks
 
 
-async def translate_text(text: str, session: aiohttp.ClientSession) -> str:
-    url = "https://translate.googleapis.com/translate_a/single"
-    params = {"client": "gtx", "sl": argument.input_language, "tl": argument.output_language, "dt": "t", "q": text}
-    async with session.get(url, params=params) as response:
-        response.raise_for_status()
-        data = await response.json()
-        text = blank_string.join(block[0] for block in data[0])
-        return text
+async def translate_text(text: str) -> str:
+    async with googletrans.Translator() as translator:
+         return (await translator.translate(text, src=argument.input_language, dest=argument.output_language)).text
 
 
 async def translate(file_name: str, semaphore: asyncio.Semaphore) -> None:
@@ -196,9 +191,8 @@ async def translate(file_name: str, semaphore: asyncio.Semaphore) -> None:
         input_file_path = os.path.join(argument.input_folder_path, file_name)
         output_file_path = os.path.join(argument.output_folder_path, file_name)
         native_text = read_file(input_file_path, "r")
-        async with aiohttp.ClientSession() as session:
-            tasks = [translate_text(chunk.strip(), session) for chunk in split_text(native_text, 5000)]
-            foreign_text = blank_line.join(await asyncio.gather(*tasks))
+        tasks = [translate_text(chunk.strip()) for chunk in split_text(native_text, 5000)]
+        foreign_text = blank_line.join(await asyncio.gather(*tasks))
         write_file(output_file_path, foreign_text, "w")
         console.print(f"SUCCESS: {file_name}")
         progress.advance(task_id)

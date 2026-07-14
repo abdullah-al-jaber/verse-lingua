@@ -13,7 +13,7 @@ Requirements to execute the script :-
 > Execute the following command for python modules :-
 >
 > ```
-> pip install rich rich-argparse aiohttp
+> pip install rich rich-argparse googletrans
 > ```
 
 Execute the following command to install the script :-
