@@ -1,39 +1,24 @@
 #!/bin/sh
 MAIN_NAME="verse-lingua"
-SERVER_URL="https://raw.githubusercontent.com/abdullah-al-jaber/$MAIN_NAME/vanilla/server-script/main.py"
-USER_URL="https://raw.githubusercontent.com/abdullah-al-jaber/$MAIN_NAME/vanilla/user-script/main.js"
-MAIN_COMPLETION_URL="https://raw.githubusercontent.com/abdullah-al-jaber/$MAIN_NAME/vanilla/shell-script/completion.fish"
-SERVER_PATH="/usr/bin/$MAIN_NAME"
-USER_PATH="/android/$MAIN_NAME.js"
+MAIN_URL="https://abdullah-al-jaber.github.io/$MAIN_NAME/python-script/main.py"
+MAIN_COMPLETION_URL="https://abdullah-al-jaber.github.io/$MAIN_NAME/shell-script/completion.fish"
+MAIN_PATH="/usr/bin/$MAIN_NAME"
 MAIN_COMPLETION_PATH="/etc/fish/completions/$MAIN_NAME.fish"
 
-if [ "$(id -u)" -ne 0 ]; then
-	echo "Failed to gain root permission !"
-	exit 1
-fi
+[ "$(id -u)" -eq 0 ] || {
+    echo "Please execute with root privilege !" && exit
+}
 
-curl -sSL "$SERVER_URL" -o "$SERVER_PATH" || {
-	echo "Failed to download server script !"
-	exit 2
+curl -sSL "$MAIN_URL" -o "$MAIN_PATH" || {
+    echo "FAILURE: curl \"$MAIN_URL\" -o \"$MAIN_PATH\" !" && exit
 }
-chmod +x "$SERVER_PATH" || {
-	echo "Failed to make server script executable !"
-	exit 3
+
+chmod +x "$MAIN_PATH" || {
+    echo "FAILURE: chmod +x \"$MAIN_PATH\" !" && exit
 }
+
 curl -sSL "$MAIN_COMPLETION_URL" -o "$MAIN_COMPLETION_PATH" || {
-	echo "Failed to download the completion !"
-	exit 2
+    echo "FAILURE: curl \"$MAIN_COMPLETION_URL\" -o \"$MAIN_COMPLETION_PATH\" !" && exit
 }
 
-echo "Successfully installed server script !"
-
-curl -sSL "$USER_URL" -o "$MAIN_NAME.js" || {
-	echo "Failed to download user script !"
-	exit 4
-}
-cp "$MAIN_NAME.js" "$USER_PATH"
-
-echo "Successfully downloaded user script !"
-echo "Please install user script ! PATH: $USER_PATH !"
-
-# Final Version
+echo "SUCCESS: ALL DONE !"

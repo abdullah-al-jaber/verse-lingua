@@ -11,7 +11,6 @@ import json
 import typing
 import asyncio
 import argparse
-import warnings
 
 import rich.console
 import rich.progress
@@ -23,9 +22,7 @@ import websockets
 
 console = rich.console.Console()
 rich.traceback.install(console=console, show_locals=True)
-warnings.filterwarnings("ignore")
-# sys.stderr = open(os.devnull, "w")
-halt_event = asyncio.Event()
+sys.stderr = open(os.devnull, "w")
 
 blank_line = "\n"
 current_index = 0
@@ -176,5 +173,3 @@ async def main() -> None:
 
 if __name__ == "__main__":
     asyncio.run(main())
-
-# Final Version [line-length : 150]
