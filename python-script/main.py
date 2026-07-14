@@ -183,7 +183,7 @@ def split_text(text: str, limit: int) -> list[str]:
 
 async def translate_text(text: str) -> str:
     async with googletrans.Translator() as translator:
-         return (await translator.translate(text, src=argument.input_language, dest=argument.output_language)).text
+        return (await translator.translate(text, src=argument.input_language, dest=argument.output_language)).text
 
 
 async def translate(file_name: str, semaphore: asyncio.Semaphore) -> None:
